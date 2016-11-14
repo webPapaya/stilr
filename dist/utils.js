@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.createMarkup = exports.hyphenate = undefined;
 
 var _typeof2 = require('babel-runtime/helpers/typeof');
 
@@ -21,13 +22,12 @@ exports.createHash = createHash;
 exports.stringifyObject = stringifyObject;
 exports.extendedToString = extendedToString;
 exports.createClassName = createClassName;
-exports.createMarkup = createMarkup;
 exports.isEmpty = isEmpty;
 exports.isPseudo = isPseudo;
 exports.isMediaQuery = isMediaQuery;
 exports.seperateStyles = seperateStyles;
 
-var _CSSPropertyOperations = require('react/lib/CSSPropertyOperations');
+var _properties = require('./properties');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -79,32 +79,28 @@ function createClassName(obj) {
   return hash ? '_' + hash : undefined;
 }
 
-function createMarkup(obj) {
-  return (0, _CSSPropertyOperations.createMarkupForStyles)(obj);
-}
-
 function isEmpty(obj) {
   return !(0, _keys2.default)(obj).length;
 }
 
 function isPseudo(_ref) {
-  var style = _ref.style;
-  var rule = _ref.rule;
+  var style = _ref.style,
+      rule = _ref.rule;
 
   return rule.charAt(0) === ':' && (typeof style === 'undefined' ? 'undefined' : (0, _typeof3.default)(style)) === 'object';
 }
 
 function isMediaQuery(_ref2) {
-  var style = _ref2.style;
-  var rule = _ref2.rule;
+  var style = _ref2.style,
+      rule = _ref2.rule;
 
   return rule.charAt(0) === '@' && (typeof style === 'undefined' ? 'undefined' : (0, _typeof3.default)(style)) === 'object';
 }
 
 function handle(type, acc, _ref3) {
-  var style = _ref3.style;
-  var rule = _ref3.rule;
-  var pseudos = arguments.length <= 3 || arguments[3] === undefined ? [] : arguments[3];
+  var style = _ref3.style,
+      rule = _ref3.rule;
+  var pseudos = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
 
   var hash = createClassName(sortObject(style));
   var rules = pseudos.length ? [[].concat(rule, style, pseudos)] : rule;
@@ -126,10 +122,9 @@ function seperateStyles(styles) {
     }
 
     if (isMediaQuery(content)) {
-      var _seperateStyles = seperateStyles(content.style);
-
-      var style = _seperateStyles.style;
-      var pseudos = _seperateStyles.pseudos;
+      var _seperateStyles = seperateStyles(content.style),
+          style = _seperateStyles.style,
+          pseudos = _seperateStyles.pseudos;
 
       return handle('mediaQueries', acc, { rule: rule, style: style }, pseudos);
     }
@@ -142,3 +137,33 @@ function seperateStyles(styles) {
     mediaQueries: []
   });
 }
+
+var isNumber = function isNumber(value) {
+  return !isNaN(value);
+};
+
+var hyphenate = exports.hyphenate = function hyphenate(stringToBeHyphenated) {
+  return stringToBeHyphenated.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+};
+
+var createMarkup = exports.createMarkup = function createMarkup() {
+  var styleDeclaration = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+  var rules = (0, _keys2.default)(styleDeclaration).map(function (cssProperty) {
+    var rawCssValue = styleDeclaration[cssProperty];
+    var hyphenatedProperty = hyphenate(cssProperty);
+
+    var cssValue = rawCssValue;
+
+    if (isNumber(cssValue) && (0, _properties.isPropertyUnitfull)(hyphenatedProperty)) {
+      cssValue += 'px';
+    }
+
+    if (cssValue.trim) {
+      cssValue = cssValue.trim();
+    }
+
+    return hyphenatedProperty + ':' + cssValue + ';';
+  });
+  return rules.join('');
+};

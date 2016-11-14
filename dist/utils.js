@@ -150,7 +150,7 @@ var createMarkup = exports.createMarkup = function createMarkup() {
   var styleDeclaration = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
   var rules = (0, _keys2.default)(styleDeclaration).map(function (cssProperty) {
-    var rawCssValue = styleDeclaration[cssProperty];
+    var rawCssValue = styleDeclaration[cssProperty] || '';
     var hyphenatedProperty = hyphenate(cssProperty);
 
     var cssValue = rawCssValue;
